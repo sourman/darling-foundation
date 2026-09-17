@@ -1073,4 +1073,236 @@ static inline NSStringEncoding defaultEncoding()
     return [[[NSString alloc] initWithBytes:str length:len encoding:defaultEncoding()] autorelease];
 }
 
+static NSError *_NSErrorICloudUnavailable(void)
+{
+    return [NSError errorWithDomain:NSCocoaErrorDomain code:NSFeatureUnsupportedError userInfo:@{
+        NSLocalizedDescriptionKey: @"iCloud is not available"
+    }];
+}
+
+- (id <NSObject, NSCopying, NSCoding>)ubiquityIdentityToken
+{
+    return nil;
+}
+
+- (NSURL *)URLForUbiquityContainerIdentifier:(NSString *)containerIdentifier
+{
+    return nil;
+}
+
+- (BOOL)isUbiquitousItemAtURL:(NSURL *)url
+{
+    return NO;
+}
+
+- (BOOL)setUbiquitous:(BOOL)flag itemAtURL:(NSURL *)url destinationURL:(NSURL *)destinationURL error:(NSError **)error
+{
+    if (error) {
+        *error = _NSErrorICloudUnavailable();
+    }
+    return NO;
+}
+
+- (BOOL)startDownloadingUbiquitousItemAtURL:(NSURL *)url error:(NSError **)error
+{
+    if (error) {
+        *error = _NSErrorICloudUnavailable();
+    }
+    return NO;
+}
+
+- (BOOL)evictUbiquitousItemAtURL:(NSURL *)url error:(NSError **)error
+{
+    if (error) {
+        *error = _NSErrorICloudUnavailable();
+    }
+    return NO;
+}
+
+- (NSURL *)URLForPublishingUbiquitousItemAtURL:(NSURL *)url expirationDate:(NSDate **)outDate error:(NSError **)error
+{
+    if (outDate) {
+        *outDate = nil;
+    }
+    if (error) {
+        *error = _NSErrorICloudUnavailable();
+    }
+    return nil;
+}
+
+- (NSURL *)temporaryDirectory
+{
+    return [NSURL fileURLWithPath:NSTemporaryDirectory() isDirectory:YES];
+}
+
+- (NSURL *)homeDirectoryForCurrentUser
+{
+    return [NSURL fileURLWithPath:NSHomeDirectory() isDirectory:YES];
+}
+
+- (NSURL *)homeDirectoryForUser:(NSString *)userName
+{
+    NSString *path = NSHomeDirectoryForUser(userName);
+    if (path == nil) {
+        return nil;
+    }
+    return [NSURL fileURLWithPath:path isDirectory:YES];
+}
+
+- (NSURL *)containerURLForSecurityApplicationGroupIdentifier:(NSString *)groupIdentifier
+{
+    return nil;
+}
+
+- (BOOL)getRelationship:(NSURLRelationship *)outRelationship ofDirectoryAtURL:(NSURL *)directoryURL toItemAtURL:(NSURL *)otherURL error:(NSError **)error
+{
+    if (outRelationship == NULL || directoryURL == nil || otherURL == nil) {
+        if (error) {
+            *error = [NSError errorWithDomain:NSCocoaErrorDomain code:NSFileReadUnknownError userInfo:nil];
+        }
+        return NO;
+    }
+
+    NSString *dir = [[directoryURL path] stringByStandardizingPath];
+    NSString *item = [[otherURL path] stringByStandardizingPath];
+    if (dir == nil || item == nil) {
+        if (error) {
+            *error = [NSError errorWithDomain:NSCocoaErrorDomain code:NSFileReadUnknownError userInfo:nil];
+        }
+        return NO;
+    }
+
+    if ([dir isEqualToString:item]) {
+        *outRelationship = NSURLRelationshipSame;
+        return YES;
+    }
+
+    NSString *prefix = [dir hasSuffix:@"/"] ? dir : [dir stringByAppendingString:@"/"];
+    if ([item hasPrefix:prefix]) {
+        *outRelationship = NSURLRelationshipContains;
+        return YES;
+    }
+
+    *outRelationship = NSURLRelationshipOther;
+    return YES;
+}
+
+- (BOOL)getRelationship:(NSURLRelationship *)outRelationship ofDirectory:(NSSearchPathDirectory)directory inDomain:(NSSearchPathDomainMask)domainMask toItemAtURL:(NSURL *)url error:(NSError **)error
+{
+    NSURL *directoryURL = nil;
+    NSArray *urls = [self URLsForDirectory:directory inDomains:domainMask];
+    if ([urls count] > 0) {
+        directoryURL = [urls objectAtIndex:0];
+    } else if (directory == NSTrashDirectory) {
+        directoryURL = [NSURL fileURLWithPath:[NSHomeDirectory() stringByAppendingPathComponent:@".Trash"] isDirectory:YES];
+    }
+
+    if (directoryURL == nil) {
+        if (error) {
+            *error = [NSError errorWithDomain:NSCocoaErrorDomain code:NSFileNoSuchFileError userInfo:nil];
+        }
+        return NO;
+    }
+
+    return [self getRelationship:outRelationship ofDirectoryAtURL:directoryURL toItemAtURL:url error:error];
+}
+
+- (BOOL)trashItemAtURL:(NSURL *)url resultingItemURL:(NSURL **)outResultingURL error:(NSError **)error
+{
+    if (url == nil) {
+        if (error) {
+            *error = [NSError errorWithDomain:NSCocoaErrorDomain code:NSFileNoSuchFileError userInfo:nil];
+        }
+        return NO;
+    }
+
+    NSString *src = [url path];
+    NSString *trashDir = [NSHomeDirectory() stringByAppendingPathComponent:@".Trash"];
+    BOOL isDir = NO;
+    if (![self fileExistsAtPath:trashDir isDirectory:&isDir] || !isDir) {
+        if (![self createDirectoryAtPath:trashDir withIntermediateDirectories:YES attributes:nil error:error]) {
+            return NO;
+        }
+    }
+
+    NSString *name = [src lastPathComponent];
+    NSString *dest = [trashDir stringByAppendingPathComponent:name];
+    NSUInteger n = 1;
+    while ([self fileExistsAtPath:dest]) {
+        dest = [trashDir stringByAppendingPathComponent:[NSString stringWithFormat:@"%@-%lu", name, (unsigned long)n]];
+        n++;
+    }
+
+    if (![self moveItemAtPath:src toPath:dest error:error]) {
+        return NO;
+    }
+
+    if (outResultingURL) {
+        *outResultingURL = [NSURL fileURLWithPath:dest];
+    }
+    return YES;
+}
+
+- (BOOL)createSymbolicLinkAtURL:(NSURL *)url withDestinationURL:(NSURL *)destURL error:(NSError **)error
+{
+    return [self createSymbolicLinkAtPath:[url path] withDestinationPath:[destURL path] error:error];
+}
+
+- (BOOL)linkItemAtPath:(NSString *)srcPath toPath:(NSString *)dstPath error:(NSError **)error
+{
+    if (error) {
+        *error = nil;
+    }
+    if (srcPath == nil || dstPath == nil) {
+        return NO;
+    }
+    if (link([srcPath fileSystemRepresentation], [dstPath fileSystemRepresentation]) == 0) {
+        return YES;
+    }
+    if (error) {
+        *error = _NSErrorWithFilePathAndErrno(dstPath, errno);
+    }
+    return NO;
+}
+
+- (BOOL)linkItemAtURL:(NSURL *)srcURL toURL:(NSURL *)dstURL error:(NSError **)error
+{
+    return [self linkItemAtPath:[srcURL path] toPath:[dstURL path] error:error];
+}
+
+- (BOOL)replaceItemAtURL:(NSURL *)originalItemURL withItemAtURL:(NSURL *)newItemURL backupItemName:(NSString *)backupItemName options:(NSFileManagerItemReplacementOptions)options resultingItemURL:(NSURL **)resultingURL error:(NSError **)error
+{
+    if (originalItemURL == nil || newItemURL == nil) {
+        if (error) {
+            *error = [NSError errorWithDomain:NSCocoaErrorDomain code:NSFileNoSuchFileError userInfo:nil];
+        }
+        return NO;
+    }
+
+    NSString *originalPath = [originalItemURL path];
+    NSString *newPath = [newItemURL path];
+
+    if (backupItemName != nil && [self fileExistsAtPath:originalPath]) {
+        NSString *backupPath = [[originalPath stringByDeletingLastPathComponent] stringByAppendingPathComponent:backupItemName];
+        if (![self moveItemAtPath:originalPath toPath:backupPath error:error]) {
+            if ((options & NSFileManagerItemReplacementWithoutDeletingBackupItem) == 0) {
+                return NO;
+            }
+        }
+    } else if ([self fileExistsAtPath:originalPath]) {
+        if (![self removeItemAtPath:originalPath error:error]) {
+            return NO;
+        }
+    }
+
+    if (![self moveItemAtPath:newPath toPath:originalPath error:error]) {
+        return NO;
+    }
+
+    if (resultingURL) {
+        *resultingURL = [NSURL fileURLWithPath:originalPath];
+    }
+    return YES;
+}
+
 @end

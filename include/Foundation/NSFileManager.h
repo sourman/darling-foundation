@@ -22,6 +22,12 @@ typedef NS_OPTIONS(NSUInteger, NSFileManagerItemReplacementOptions) {
     NSFileManagerItemReplacementWithoutDeletingBackupItem = 1UL << 1
 };
 
+typedef NS_ENUM(NSInteger, NSURLRelationship) {
+    NSURLRelationshipContains = 0,
+    NSURLRelationshipSame = 1,
+    NSURLRelationshipOther = 2
+};
+
 FOUNDATION_EXPORT NSString * const NSUbiquityIdentityDidChangeNotification;
 FOUNDATION_EXPORT NSString * const NSFileType;
 FOUNDATION_EXPORT NSString * const NSFileTypeDirectory;
@@ -167,6 +173,12 @@ FOUNDATION_EXPORT NSString * const NSFileSystemFreeNodes;
 - (NSURL *)URLForUbiquityContainerIdentifier:(NSString *)containerIdentifier;
 - (NSURL *)URLForPublishingUbiquitousItemAtURL:(NSURL *)url expirationDate:(NSDate **)outDate error:(NSError **)error;
 - (id <NSObject, NSCopying, NSCoding>)ubiquityIdentityToken;
+- (NSURL *)temporaryDirectory;
+- (NSURL *)homeDirectoryForCurrentUser;
+- (NSURL *)homeDirectoryForUser:(NSString *)userName;
+- (NSURL *)containerURLForSecurityApplicationGroupIdentifier:(NSString *)groupIdentifier;
+- (BOOL)getRelationship:(NSURLRelationship *)outRelationship ofDirectoryAtURL:(NSURL *)directoryURL toItemAtURL:(NSURL *)otherURL error:(NSError **)error;
+- (BOOL)getRelationship:(NSURLRelationship *)outRelationship ofDirectory:(NSSearchPathDirectory)directory inDomain:(NSSearchPathDomainMask)domainMask toItemAtURL:(NSURL *)url error:(NSError **)error;
 
 @end
 

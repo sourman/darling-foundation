@@ -16,6 +16,10 @@
 #import <Foundation/NSURL.h>
 #import <Foundation/NSDictionary.h>
 #import <Foundation/NSFileManager.h>
+#import <stdlib.h>
+#import <string.h>
+
+__attribute__((used)) static const char nsbundle_principal_image_v1[] = "nsbundle_principal_image_v1";
 
 NSString *const NSBundleDidLoadNotification = @"NSBundleDidLoadNotification";
 NSString *const NSLoadedClasses = @"NSLoadedClasses";
@@ -737,8 +741,62 @@ static void __NSBundleMainBundleDealloc()
 
 - (Class)classNamed:(NSString *)className
 {
-#warning TODO: classNamed should lookup by images
-    return NSClassFromString(className);
+    if (className == nil)
+    {
+        return Nil;
+    }
+    if (![self isLoaded])
+    {
+        [self load];
+    }
+
+    Class cls = NSClassFromString(className);
+    if (cls != Nil)
+    {
+        return cls;
+    }
+
+    const char *wanted = [className UTF8String];
+    if (wanted == NULL)
+    {
+        return Nil;
+    }
+
+    NSString *exec = [self executablePath];
+    if (exec != nil)
+    {
+        unsigned int count = 0;
+        const char **names = objc_copyClassNamesForImage([exec fileSystemRepresentation], &count);
+        if (names != NULL)
+        {
+            for (unsigned int i = 0; i < count; i++)
+            {
+                if (strcmp(names[i], wanted) == 0)
+                {
+                    cls = objc_lookUpClass(names[i]);
+                    if (cls == Nil)
+                    {
+                        cls = objc_getClass(names[i]);
+                    }
+                    break;
+                }
+            }
+            free((void *)names);
+        }
+        if (cls != Nil)
+        {
+            return cls;
+        }
+    }
+
+    /* CFBundleLoadExecutable uses RTLD_LOCAL. The class object still lives in
+     * this image even when objc_lookUpClass cannot see it yet. */
+    if (_cfBundle != NULL)
+    {
+        NSString *symbol = [@"OBJC_CLASS_$_" stringByAppendingString:className];
+        cls = (Class)CFBundleGetDataPointerForName(_cfBundle, (CFStringRef)symbol);
+    }
+    return cls;
 }
 
 - (Class)principalClass
@@ -749,12 +807,15 @@ static void __NSBundleMainBundleDealloc()
     }
     if (_principalClass == Nil)
     {
-        NSString *principalClassName = [[self infoDictionary] objectForKey:@"NSPrincipalClass"];
-        Class cls = NSClassFromString(principalClassName);
-        // ensure an initialize is triggered and the class is reasonable
-        if (cls != Nil && class_respondsToSelector(object_getClass(cls), @selector(self)))
+        NSString *principalClassName = [self objectForInfoDictionaryKey:@"NSPrincipalClass"];
+        if (principalClassName == nil)
         {
-            _principalClass = [cls self];
+            principalClassName = [[self infoDictionary] objectForKey:@"NSPrincipalClass"];
+        }
+        Class cls = [self classNamed:principalClassName];
+        if (cls != Nil)
+        {
+            _principalClass = cls;
         }
     }
     return _principalClass;

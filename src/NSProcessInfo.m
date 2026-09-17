@@ -352,6 +352,11 @@ SINGLETON_RR()
 	}
 }
 
+- (NSProcessInfoThermalState)thermalState
+{
+	return NSProcessInfoThermalStateNominal;
+}
+
 @end
 
 @implementation NSProcessInfo (NSProcessInfoPlatform)

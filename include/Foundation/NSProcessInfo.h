@@ -50,6 +50,16 @@ NSOperatingSystemVersion;
 - (NSOperatingSystemVersion)operatingSystemVersion;
 - (BOOL)isOperatingSystemAtLeastVersion:(NSOperatingSystemVersion)version;
 
+typedef NSInteger NSProcessInfoThermalState;
+enum {
+	NSProcessInfoThermalStateNominal = 0,
+	NSProcessInfoThermalStateFair = 1,
+	NSProcessInfoThermalStateSerious = 2,
+	NSProcessInfoThermalStateCritical = 3,
+};
+
+- (NSProcessInfoThermalState)thermalState;
+
 @end
 
 @interface NSProcessInfo (NSProcessInfoPlatform)
