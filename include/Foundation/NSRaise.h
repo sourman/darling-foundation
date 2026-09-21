@@ -21,10 +21,14 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
 #import <Foundation/NSException.h>
 #import <Foundation/NSString.h>
+#include <stdio.h>
 
 static inline void _NSInvalidAbstractInvocation(SEL selector, id object,
                                                 const char *file, int line)
 {
+    fprintf(stderr, "nsexc_v1 abstract class=%s sel=%s file=%s:%d\n",
+            object_getClassName(object), sel_getName(selector), file, line);
+    fflush(stderr);
     [NSException raise: NSInvalidArgumentException
                 format: @"-%s only defined for abstract class. Define -[%@ %s] "
                         @"in %s:%d!",

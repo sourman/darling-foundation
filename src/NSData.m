@@ -10,6 +10,7 @@
 
 #import <Foundation/NSError.h>
 #import <Foundation/NSException.h>
+#import <Foundation/FoundationErrors.h>
 #import <Foundation/NSURL.h>
 #import <Foundation/NSURLConnection.h>
 #import <Foundation/NSURLRequest.h>
@@ -687,6 +688,20 @@ OBJC_PROTOCOL_IMPL_POP
         return NO;
     }
     return _NSWriteBytesToFile(self, url, writeOptionsMask, errorPtr);
+}
+
+- (BOOL)writeToURL:(NSURL *)url error:(NSError **)errorPtr
+{
+    static const char writetourl_error_v1[] = "writetourl_error_v1";
+    (void)writetourl_error_v1;
+    if (url == nil)
+    {
+        if (errorPtr) {
+            *errorPtr = [NSError errorWithDomain:NSCocoaErrorDomain code:NSFileWriteInvalidFileNameError userInfo:nil];
+        }
+        return NO;
+    }
+    return [self writeToURL:url options:NSDataWritingAtomic error:errorPtr];
 }
 
 - (NSRange)rangeOfData:(NSData *)dataToFind options:(NSDataSearchOptions)mask range:(NSRange)searchRange

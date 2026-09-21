@@ -9,11 +9,13 @@
 #import "NSObjectInternal.h"
 
 #import <Foundation/NSString.h>
+#import <Foundation/NSArray.h>
 #import <Foundation/NSPortCoder.h>
 
 #import <dispatch/dispatch.h>
 #import <objc/runtime.h>
 #import <unistd.h>
+#include <stdio.h>
 
 #define __is_being_debugged__ 0
 
@@ -32,6 +34,22 @@ BOOL NSHangOnUncaughtException = NO;
 
 static void printExceptionInformation(id exception)
 {
+    const char *cls = object_getClassName(exception);
+    const char *reason = "";
+    if ([exception respondsToSelector:@selector(reason)]) {
+        NSString *r = [exception reason];
+        reason = r ? [r UTF8String] : "(nil)";
+    }
+    fprintf(stderr, "nsexc_v1 uncaught class=%s reason=%s obj=%p\n",
+            cls ? cls : "?", reason ? reason : "(nil)", exception);
+    if ([exception respondsToSelector:@selector(callStackSymbols)]) {
+        NSArray *syms = [exception callStackSymbols];
+        for (id line in syms) {
+            const char *s = [line respondsToSelector:@selector(UTF8String)] ? [line UTF8String] : NULL;
+            fprintf(stderr, "nsexc_v1 stack %s\n", s ? s : "(nil)");
+        }
+    }
+    fflush(stderr);
     NSLog(@"Terminating app due to uncaught exception '%@', reason: '%@'", NSStringFromClass([exception class]), [exception reason]);
 }
 

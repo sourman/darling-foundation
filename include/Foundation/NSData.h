@@ -57,6 +57,7 @@ typedef NS_OPTIONS(NSUInteger, NSDataBase64DecodingOptions) {
 - (BOOL)writeToURL:(NSURL *)url atomically:(BOOL)atomically;
 - (BOOL)writeToFile:(NSString *)path options:(NSDataWritingOptions)writeOptionsMask error:(NSError **)errorPtr;
 - (BOOL)writeToURL:(NSURL *)url options:(NSDataWritingOptions)writeOptionsMask error:(NSError **)errorPtr;
+- (BOOL)writeToURL:(NSURL *)url error:(NSError **)errorPtr;
 - (NSRange)rangeOfData:(NSData *)dataToFind options:(NSDataSearchOptions)mask range:(NSRange)searchRange NS_AVAILABLE(10_6, 4_0);
 
 #if NS_BLOCKS_AVAILABLE
