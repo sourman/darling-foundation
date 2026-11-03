@@ -18,6 +18,7 @@
 */
 
 #import <Foundation/NSUserNotification.h>
+#import <Foundation/NSArray.h>
 
 @implementation NSUserNotification
 
@@ -59,6 +60,17 @@ static NSUserNotificationCenter *_defaultUserNotificationCenter = nil;
 
 - (void)removeDeliveredNotification:(NSUserNotification *)notification {
 	NSLog(@"[NSUserNotificationCenter removeDeliveredNotification:]");
+}
+
+- (NSArray *)deliveredNotifications {
+	return [NSArray array];
+}
+
+- (NSArray *)scheduledNotifications {
+	return [NSArray array];
+}
+
+- (void)removeAllDeliveredNotifications {
 }
 
 @end
