@@ -329,6 +329,12 @@ SINGLETON_RR()
 	return version;
 }
 
+- (NSInteger)thermalState
+{
+	/* NSProcessInfoThermalStateNominal. This VM has no thermal sensor. */
+	return 0;
+}
+
 - (BOOL)isOperatingSystemAtLeastVersion:(NSOperatingSystemVersion)version
 {
 	NSOperatingSystemVersion curver = [self operatingSystemVersion];
