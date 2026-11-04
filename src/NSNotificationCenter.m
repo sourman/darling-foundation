@@ -12,6 +12,7 @@
 #import "NSNotificationInternal.h"
 #import <dispatch/dispatch.h>
 #import <pthread.h>
+#import <stdio.h>
 
 @interface _NSNotificationObserver : NSObject
 {
@@ -83,6 +84,15 @@
     }
     else if (_observer != nil && _selector != NULL)
     {
+        if (_selector == @selector(windowDidChangeOcclusionState:)) {
+            fprintf(stderr,
+                    "windowDidChangeOcclusionState: run observer %p class %s window %p\n",
+                    _observer,
+                    _observer ? [NSStringFromClass([_observer class]) UTF8String]
+                              : "(nil)",
+                    [notif object]);
+            fflush(stderr);
+        }
         [_observer performSelector:_selector withObject:notif];
     }
 }
