@@ -85,12 +85,16 @@
     else if (_observer != nil && _selector != NULL)
     {
         if (_selector == @selector(windowDidChangeOcclusionState:)) {
+            void *host = NULL;
+            if (_observer != nil)
+                host = ((void **)_observer)[1];
             fprintf(stderr,
-                    "windowDidChangeOcclusionState: run observer %p class %s window %p\n",
+                    "windowDidChangeOcclusionState: run observer %p class %s window %p host %p branch %s\n",
                     _observer,
                     _observer ? [NSStringFromClass([_observer class]) UTF8String]
                               : "(nil)",
-                    [notif object]);
+                    [notif object], host,
+                    host ? "onWindowOcclusionChanged" : "return-no-host");
             fflush(stderr);
         }
         [_observer performSelector:_selector withObject:notif];
