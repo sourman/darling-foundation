@@ -20,6 +20,7 @@
 
 #import <CoreFoundation/CFData.h>
 #import <CoreFoundation/CFBase.h>
+#import <CoreFoundation/CFDictionary.h>
 #import <CoreFoundation/CFPropertyList.h>
 
 #import <stdio.h>
@@ -47,8 +48,17 @@
     }
     else
     {
-        CFDictionaryRef plist = (CFDictionaryRef)CFPropertyListCreateWithData(kCFAllocatorDefault, data, immutable ? kCFPropertyListImmutable : kCFPropertyListMutableContainers, NULL, NULL);
+        CFPropertyListRef plist = CFPropertyListCreateWithData(kCFAllocatorDefault, data, immutable ? kCFPropertyListImmutable : kCFPropertyListMutableContainers, NULL, NULL);
         CFRelease(data);
+        if (plist == NULL || CFGetTypeID(plist) != CFDictionaryGetTypeID())
+        {
+            /* Chromium logs "dock_plist is not an NSDictionary" and then
+             * messages the value. initWithDictionary: on an array or string
+             * traps. An empty dictionary is the same result as a missing file. */
+            if (plist != NULL)
+                CFRelease(plist);
+            return [[NSDictionary alloc] init];
+        }
         id dict = nil;
         if (immutable)
         {
@@ -58,10 +68,7 @@
         {
             dict = [[NSMutableDictionary alloc] initWithDictionary:(NSMutableDictionary *)plist];
         }
-        if (plist != nil)
-        {
-            CFRelease(plist);
-        }
+        CFRelease(plist);
         return dict;
     }
 }
