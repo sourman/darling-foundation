@@ -34,3 +34,8 @@
 }
 
 @end
+
+__attribute__((visibility("default"), used)) void *NSUserActivityTypeBrowsingWeb = 0;
+NSString *const NSOSStatusErrorDomain = @"NSOSStatusErrorDomain";
+__attribute__((visibility("default"), used)) void *NSProcessInfoThermalStateDidChangeNotification = 0;
+__attribute__((visibility("default"), used)) void *NSURLSessionTaskPriorityHigh = 0;

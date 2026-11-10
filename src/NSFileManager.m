@@ -1073,4 +1073,48 @@ static inline NSStringEncoding defaultEncoding()
     return [[[NSString alloc] initWithBytes:str length:len encoding:defaultEncoding()] autorelease];
 }
 
+/* No iCloud account in this environment. Chromium reads the token during startup. */
+- (id <NSObject, NSCopying, NSCoding>)ubiquityIdentityToken
+{
+    return nil;
+}
+
+- (NSURL *)URLForUbiquityContainerIdentifier:(NSString *)containerIdentifier
+{
+    return nil;
+}
+
+- (NSURL *)URLForPublishingUbiquitousItemAtURL:(NSURL *)url expirationDate:(NSDate **)outDate error:(NSError **)error
+{
+    if (error)
+        *error = nil;
+    return nil;
+}
+
+- (BOOL)setUbiquitous:(BOOL)flag itemAtURL:(NSURL *)url destinationURL:(NSURL *)destinationURL error:(NSError **)error
+{
+    if (error)
+        *error = nil;
+    return NO;
+}
+
+- (BOOL)isUbiquitousItemAtURL:(NSURL *)url
+{
+    return NO;
+}
+
+- (BOOL)startDownloadingUbiquitousItemAtURL:(NSURL *)url error:(NSError **)error
+{
+    if (error)
+        *error = nil;
+    return NO;
+}
+
+- (BOOL)evictUbiquitousItemAtURL:(NSURL *)url error:(NSError **)error
+{
+    if (error)
+        *error = nil;
+    return NO;
+}
+
 @end
